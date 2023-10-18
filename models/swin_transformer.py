@@ -566,15 +566,20 @@ class SwinTransformer(nn.Module):
             x = layer(x)
 
         x = self.norm(x)  # B L C
+        patches = x
         x = self.avgpool(x.transpose(1, 2))  # B C 1
         x = torch.flatten(x, 1)
-        return x
+        return x, patches
 
-    def forward(self, x, include_features=False):
-        features = self.forward_features(x)
+    def forward(self, x, include_features=False, include_patches=False):
+        features, patches = self.forward_features(x)
         x = self.head(features)
-        if include_features:
-            return x, features
+        if include_features and not include_patches:
+            return x, features 
+        if include_patches and not include_features:
+            return x, patches
+        if include_patches and include_features:
+            return x, features, patches
         return x
 
     def flops(self):
